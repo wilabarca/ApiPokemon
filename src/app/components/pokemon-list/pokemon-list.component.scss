@@ -1,0 +1,25 @@
+// src/app/components/pokemon-list/pokemon-list.component.scss
+table {
+  width: 100%;
+}
+
+th.mat-header-cell {
+  background: #f1f1f1;
+}
+
+td.mat-cell {
+  cursor: pointer;
+}
+
+button {
+  background-color: #ff4081;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #ff80ab;
+}
