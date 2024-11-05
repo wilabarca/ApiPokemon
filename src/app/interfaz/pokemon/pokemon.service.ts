@@ -1,8 +1,7 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, switchMap, catchError } from 'rxjs/operators';
 import { Pokemon } from '../../models/pokemon.model';
 
 @Injectable({
@@ -13,29 +12,28 @@ export class PokemonService {
 
   constructor(private http: HttpClient) {}
 
-
   getPokemons(): Observable<Pokemon[]> {
     return this.http.get<{ results: { name: string; url: string; }[] }>(`${this.apiUrl}?limit=100`).pipe(
-      map(response => {
-
-        return response.results.map((pokemon, index) => ({
-          id: index + 1, // Asignar un ID
-          name: pokemon.name,
-          url: pokemon.url
-        }));
-      }),
-
-      switchMap((pokemons: { id: number; name: string; url: string }[]) =>
-        forkJoin(pokemons.map((pokemon) => this.getPokemonDetails(pokemon.url)))
+      switchMap(response =>
+        forkJoin(response.results.map(pokemon => this.getPokemonDetails(pokemon.url))).pipe(
+          map(pokemons => pokemons.filter((pokemon): pokemon is Pokemon => pokemon !== null)),
+          catchError(err => {
+            console.error('Error al obtener los detalles de los Pokémon:', err);
+            return of([]); 
+          })
+        )
       )
     );
   }
 
-
-  private getPokemonDetails(url: string): Observable<Pokemon> {
-    return this.http.get<Pokemon>(url);
+  private getPokemonDetails(url: string): Observable<Pokemon | null> {
+    return this.http.get<Pokemon>(url).pipe(
+      catchError(err => {
+        console.error('Error al obtener los detalles del Pokémon:', err);
+        return of(null); 
+      })
+    );
   }
-
 
   getPokemonById(id: number): Observable<Pokemon> {
     return this.http.get<Pokemon>(`${this.apiUrl}/${id}`);
